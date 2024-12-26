@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>博客后台管理</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: #f0f2f5;
+            display: flex;
+        }
+
+        /* 侧边栏样式 */
+        .sidebar {
+            width: 250px;
+            background: #001529;
+            height: 100vh;
+            padding: 20px;
+            color: white;
+            position: fixed;
+        }
+
+        .sidebar h2 {
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .menu-item {
+            padding: 12px 20px;
+            cursor: pointer;
+            margin: 5px 0;
+            border-radius: 4px;
+            transition: background 0.3s;
+        }
+
+        .menu-item:hover {
+            background: #1890ff;
+        }
+
+        /* 主要内容区域 */
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
+            width: calc(100% - 250px);
+        }
+
+        /* 文章编辑表单 */
+        .edit-form {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #d9d9d9;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .form-group textarea {
+            min-height: 200px;
+            resize: vertical;
+        }
+
+        .button {
+            background: #1890ff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+
+        .button:hover {
+            background: #40a9ff;
+        }
+
+        /* 文章列表样式 */
+        .article-list {
+            margin-top: 20px;
+        }
+
+        .article-item {
+            background: white;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .article-actions button {
+            margin-left: 10px;
+        }
+
+        .delete-btn {
+            background: #ff4d4f;
+        }
+
+        .delete-btn:hover {
+            background: #ff7875;
+        }
+    </style>
+</head>
+<body>
+    <!-- 侧边栏 -->
+    <div class="sidebar">
+        <h2>博客管理系统</h2>
+        <div class="menu-item" onclick="showSection('write')">写文章</div>
+        <div class="menu-item" onclick="showSection('manage')">管理文章</div>
+        <div class="menu-item" onclick="showSection('categories')">分类管理</div>
+    </div>
+
+    <!-- 主要内容区域 -->
+    <div class="main-content">
+        <!-- 写文章部分 -->
+        <div id="write-section" class="edit-form">
+            <h2>发布新文章</h2>
+            <form id="post-form" onsubmit="submitPost(event)">
+                <div class="form-group">
+                    <label for="title">文章标题</label>
+                    <input type="text" id="title" required>
+                </div>
+                <div class="form-group">
+                    <label for="category">分类</label>
+                    <input type="text" id="category">
+                </div>
+                <div class="form-group">
+                    <label for="content">文章内容</label>
+                    <textarea id="content" required></textarea>
+                </div>
+                <button type="submit" class="button">发布文章</button>
+            </form>
+        </div>
+
+        <!-- 文章管理部分 -->
+        <div id="manage-section" style="display: none;">
+            <h2>文章管理</h2>
+            <div class="article-list" id="article-list">
+                <!-- 文章列表将通过 JavaScript 动态加载 -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 显示不同的部分
+        function showSection(section) {
+            document.getElementById('write-section').style.display = 'none';
+            document.getElementById('manage-section').style.display = 'none';
+            
+            if (section === 'write') {
+                document.getElementById('write-section').style.display = 'block';
+            } else if (section === 'manage') {
+                document.getElementById('manage-section').style.display = 'block';
+                loadArticles();
+            }
+        }
+
+        // 提交文章
+        function submitPost(event) {
+            event.preventDefault();
+            const title = document.getElementById('title').value;
+            const category = document.getElementById('category').value;
+            const content = document.getElementById('content').value;
+
+            const article = {
+                title,
+                category,
+                content,
+                date: new Date().toISOString()
+            };
+
+            // 获取现有文章
+            let articles = JSON.parse(localStorage.getItem('articles') || '[]');
+            articles.push(article);
+            localStorage.setItem('articles', JSON.stringify(articles));
+
+            alert('文章发布成功！');
+            document.getElementById('post-form').reset();
+            
+            // 询问是否返回主页查看
+            if(confirm('文章发布成功！是否返回主页查看？')) {
+                window.location.href = 'html.html';
+            }
+        }
+
+        // 加载文章列表
+        function loadArticles() {
+            const articles = JSON.parse(localStorage.getItem('articles') || '[]');
+            const articleList = document.getElementById('article-list');
+            articleList.innerHTML = '';
+
+            articles.forEach((article, index) => {
+                const articleElement = document.createElement('div');
+                articleElement.className = 'article-item';
+                articleElement.innerHTML = `
+                    <div>
+                        <h3>${article.title}</h3>
+                        <p>分类：${article.category}</p>
+                        <small>${new Date(article.date).toLocaleDateString()}</small>
+                    </div>
+                    <div class="article-actions">
+                        <button class="button" onclick="editArticle(${index})">编辑</button>
+                        <button class="button delete-btn" onclick="deleteArticle(${index})">删除</button>
+                    </div>
+                `;
+                articleList.appendChild(articleElement);
+            });
+        }
+
+        // 删除文章
+        function deleteArticle(index) {
+            if (confirm('确定要删除这篇文章吗？')) {
+                let articles = JSON.parse(localStorage.getItem('articles') || '[]');
+                articles.splice(index, 1);
+                localStorage.setItem('articles', JSON.stringify(articles));
+                loadArticles();
+            }
+        }
+
+        // 编辑文章
+        function editArticle(index) {
+            const articles = JSON.parse(localStorage.getItem('articles') || '[]');
+            const article = articles[index];
+            
+            document.getElementById('title').value = article.title;
+            document.getElementById('category').value = article.category;
+            document.getElementById('content').value = article.content;
+            
+            showSection('write');
+        }
+    </script>
+</body>
+</html>
